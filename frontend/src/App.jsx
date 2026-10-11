@@ -1,6 +1,19 @@
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Link, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
-import { ArrowRight, Boxes, Leaf, LogOut, MapPin, MessageCircle, Tractor } from 'lucide-react';
+import {
+  ArrowRight,
+  Boxes,
+  Cpu,
+  Globe,
+  Leaf,
+  LogOut,
+  MapPin,
+  MessageCircle,
+  Radio,
+  ShieldCheck,
+  Tractor,
+  Zap,
+} from 'lucide-react';
 import Equipment from './pages/Equipment.jsx';
 import EquipmentDetail from './pages/EquipmentDetail.jsx';
 import Login from './pages/Login.jsx';
@@ -27,35 +40,108 @@ function AppFrame({ user, onLogout }) {
   const location = useLocation();
   const onCatalog = location.pathname === '/catalog' || location.pathname.startsWith('/equipment/');
   return (
-    <div className="app-frame">
-      <header className="site-header">
-        <Link className="brand" to="/catalog" aria-label="Fieldstead home">
-          <span className="brand-mark"><Tractor size={21} strokeWidth={1.8} /></span>
-          <span><strong>Fieldstead</strong><small>Equipment exchange</small></span>
+    <div className="app-frame cyber-theme">
+      {/* Futuristic Header */}
+      <header className="site-header cyber-header">
+        <Link className="brand cyber-brand" to="/catalog" aria-label="Fieldstead TerraPulse home">
+          <span className="brand-mark cyber-brand-mark">
+            <Tractor size={22} strokeWidth={1.8} />
+          </span>
+          <span className="brand-text">
+            <strong>FIELDSTEAD <span className="brand-pulse">// TERRAPULSE</span></strong>
+            <small>Autonomous Fleet Exchange</small>
+          </span>
         </Link>
-        <nav className="main-nav" aria-label="Main navigation">
-          <Link className={onCatalog ? 'nav-link active' : 'nav-link'} to="/catalog"><Boxes size={16} /> Equipment</Link>
-          {user && <Link className={location.pathname === '/rentals' ? 'nav-link active' : 'nav-link'} to="/rentals"><Leaf size={16} /> {user.role === 'ADMIN' ? 'Rental desk' : 'My rentals'}</Link>}
-          <Link className="nav-link" to="/catalog#contact"><MessageCircle size={15} /> Contact</Link>
-          <Link className="nav-link nav-location" to="/catalog#location"><MapPin size={15} /> Location</Link>
+
+        {/* Global Live Telemetry Status Pill */}
+        <div className="header-telemetry-pill">
+          <Radio size={12} className="pulse-icon" />
+          <span>RTK LOCK: 12 SATS &bull; SECTOR 04 ONLINE</span>
+        </div>
+
+        <nav className="main-nav cyber-nav" aria-label="Main navigation">
+          <Link className={onCatalog ? 'nav-link active' : 'nav-link'} to="/catalog">
+            <Boxes size={15} /> Fleet Grid
+          </Link>
+          {user && (
+            <Link className={location.pathname === '/rentals' ? 'nav-link active' : 'nav-link'} to="/rentals">
+              <Cpu size={15} /> {user.role === 'ADMIN' ? 'Dispatch Desk' : 'My Dispatches'}
+            </Link>
+          )}
+          <Link className="nav-link" to="/catalog#advisory">
+            <Radio size={14} /> Telemetry
+          </Link>
+          <Link className="nav-link nav-location" to="/catalog#location">
+            <MapPin size={14} /> Station
+          </Link>
         </nav>
+
         <div className="header-account">
-          {user ? <>
-            <span className="account-name"><span className="online-dot" />{user.name}</span>
-            <button className="icon-button" type="button" onClick={onLogout} aria-label="Sign out" title="Sign out"><LogOut size={17} /></button>
-          </> : <Link className="header-login" to="/login">Sign in <ArrowRight size={15} /></Link>}
+          {user ? (
+            <>
+              <div className="account-pill">
+                <span className="online-dot" />
+                <span className="account-user-name">{user.name}</span>
+                <span className="role-tag">{user.role}</span>
+              </div>
+              <button
+                className="icon-button cyber-logout-btn"
+                type="button"
+                onClick={onLogout}
+                aria-label="Sign out"
+                title="Disconnect station session"
+              >
+                <LogOut size={16} />
+              </button>
+            </>
+          ) : (
+            <Link className="header-login cyber-login-btn" to="/login">
+              <span>Connect Station</span>
+              <ArrowRight size={15} />
+            </Link>
+          )}
         </div>
       </header>
+
       <main className="main-content"><Outlet /></main>
-      <footer className="site-footer">
+
+      {/* Futuristic Footer */}
+      <footer className="site-footer cyber-footer" id="location">
         <div className="footer-brand">
-          <Link className="brand footer-logo" to="/catalog"><span className="brand-mark"><Tractor size={19} /></span><span><strong>Fieldstead</strong><small>Equipment exchange</small></span></Link>
-          <p>Good equipment, shared locally.<br />More time for the work that matters.</p>
-          <span className="footer-demo-note">Demo contact details — replace before launch.</span>
+          <Link className="brand footer-logo cyber-brand" to="/catalog">
+            <span className="brand-mark cyber-brand-mark"><Tractor size={19} /></span>
+            <span className="brand-text">
+              <strong>FIELDSTEAD</strong>
+              <small>TerraPulse Agritech Protocol</small>
+            </span>
+          </Link>
+          <p>
+            Decentralized autonomous farm machinery protocol. Real-time RTK GPS,
+            instant sector dispatch, zero upfront capital lock.
+          </p>
+          <div className="footer-system-status">
+            <span className="dot-pulse" /> NETWORK STATUS: ALL SECTORS NOMINAL
+          </div>
         </div>
-        <div className="footer-links"><strong>Explore</strong><Link to="/catalog">Browse equipment</Link>{user && <Link to="/rentals">{user.role === 'ADMIN' ? 'Rental desk' : 'My rentals'}</Link>}<Link to="/catalog#contact">Contact us</Link></div>
-        <div className="footer-contact" id="location"><strong>Find us</strong><a href="mailto:hello@fieldstead.example">hello@fieldstead.example</a><a href="tel:+910000000000">+91 00000 00000 <span>(demo)</span></a><a href="https://www.google.com/maps/search/?api=1&query=Demo+Farm+Bengaluru+India" target="_blank" rel="noreferrer">Demo farm · Bengaluru, India <MapPin size={14} /></a></div>
-        <div className="footer-bottom"><span>© {new Date().getFullYear()} Fieldstead <span className="footer-dot">/</span> Built for working farms</span><span>Plan well. Work the land.</span></div>
+
+        <div className="footer-links">
+          <strong>Fleet Navigation</strong>
+          <Link to="/catalog">Autonomous Fleet Grid</Link>
+          {user && <Link to="/rentals">{user.role === 'ADMIN' ? 'Fleet Dispatch Console' : 'Active Field Dispatches'}</Link>}
+          <a href="mailto:ops@fieldstead.grid">Operations Dispatch</a>
+        </div>
+
+        <div className="footer-contact">
+          <strong>Station Telemetry</strong>
+          <a href="mailto:telemetry@fieldstead.grid">telemetry@fieldstead.grid</a>
+          <span className="telemetry-code">GRID_COORDINATES: 12.9716° N, 77.5946° E</span>
+          <span className="telemetry-code">STATION: BLR_CENTRAL_HUB</span>
+        </div>
+
+        <div className="footer-bottom">
+          <span>&copy; {new Date().getFullYear()} FIELDSTEAD TERRAPULSE &bull; AUTONOMOUS AGRICULTURAL PROTOCOL</span>
+          <span>CALIBRATED FOR HIGH-EFFICIENCY FOOD PRODUCTION</span>
+        </div>
       </footer>
     </div>
   );

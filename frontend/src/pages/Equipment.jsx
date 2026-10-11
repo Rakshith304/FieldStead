@@ -1,18 +1,65 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUpRight, ChevronLeft, ChevronRight, CirclePlus, MapPin, Search, SlidersHorizontal } from 'lucide-react';
+import {
+  Activity,
+  ArrowUpRight,
+  BatteryCharging,
+  ChevronLeft,
+  ChevronRight,
+  CirclePlus,
+  Cpu,
+  Gauge,
+  Layers,
+  Navigation,
+  Radio,
+  Search,
+  SlidersHorizontal,
+  Sparkles,
+  Tractor,
+  Zap,
+} from 'lucide-react';
 import api, { errorText } from '../api';
 import EquipmentVisual from '../components/EquipmentVisual.jsx';
+import WeatherRadar from '../components/WeatherRadar.jsx';
 
 const pageSize = 20;
-const categories = ['Crop Care', 'Fertilizing', 'Field Maintenance', 'Harvesting', 'Irrigation', 'Land Preparation', 'Planting', 'Post-harvest', 'Sowing', 'Tillage', 'Transport', 'Tractor'];
-const emptyForm = { name: '', category: '', dailyRate: '', quantity: 1, description: '', uses: '', imageUrl: '' };
+const categories = [
+  'All Categories',
+  'Crop Care',
+  'Fertilizing',
+  'Field Maintenance',
+  'Harvesting',
+  'Irrigation',
+  'Land Preparation',
+  'Planting',
+  'Post-harvest',
+  'Sowing',
+  'Tillage',
+  'Transport',
+  'Tractor',
+];
+
+const emptyForm = {
+  name: '',
+  category: '',
+  dailyRate: '',
+  quantity: 1,
+  description: '',
+  uses: '',
+  imageUrl: '',
+  powerRating: '',
+  fuelType: '',
+  autonomousLevel: 'RTK Level 2 Autosteer',
+  soilSuitability: '',
+  gpsEnabled: true,
+};
 
 export default function Equipment({ user }) {
   const [catalog, setCatalog] = useState({ content: [], totalElements: 0, totalPages: 0, number: 0 });
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('');
+  const [sortBy, setSortBy] = useState('default');
   const [page, setPage] = useState(0);
   const [refresh, setRefresh] = useState(0);
   const [form, setForm] = useState(emptyForm);
@@ -23,7 +70,8 @@ export default function Equipment({ user }) {
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
-    api.get('/equipment', { params: { page, size: pageSize, search, category }, signal: controller.signal })
+    const catQuery = category === 'All Categories' ? '' : category;
+    api.get('/equipment', { params: { page, size: pageSize, search, category: catQuery }, signal: controller.signal })
       .then(({ data }) => setCatalog(data))
       .catch((error) => { if (error.name !== 'CanceledError') { setMessage(errorText(error)); setIsError(true); } })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
@@ -38,9 +86,13 @@ export default function Equipment({ user }) {
   async function addEquipment(event) {
     event.preventDefault();
     try {
-      await api.post('/equipment', { ...form, dailyRate: Number(form.dailyRate), quantity: Number(form.quantity) });
+      await api.post('/equipment', {
+        ...form,
+        dailyRate: Number(form.dailyRate),
+        quantity: Number(form.quantity),
+      });
       setForm(emptyForm);
-      notify('Equipment added to the catalog.');
+      notify('New autonomous equipment deployed to the live network.');
       setPage(0);
       setRefresh((value) => value + 1);
     } catch (error) {
@@ -48,83 +100,317 @@ export default function Equipment({ user }) {
     }
   }
 
+  // Client-side sorting for rapid UI responsiveness
+  let displayItems = [...(catalog.content || [])];
+  if (sortBy === 'rate-asc') {
+    displayItems.sort((a, b) => Number(a.dailyRate) - Number(b.dailyRate));
+  } else if (sortBy === 'rate-desc') {
+    displayItems.sort((a, b) => Number(b.dailyRate) - Number(a.dailyRate));
+  } else if (sortBy === 'units') {
+    displayItems.sort((a, b) => Number(b.quantity) - Number(a.quantity));
+  }
+
   const firstItem = catalog.totalElements === 0 ? 0 : page * pageSize + 1;
   const lastItem = Math.min((page + 1) * pageSize, catalog.totalElements);
 
   return (
     <div className="catalog-page">
-      <section className="catalog-intro">
-        <div>
-          <span className="eyebrow"><span className="eyebrow-mark" /> FIELD INVENTORY / INDIA</span>
-          <h1>Make room for<br /><em>what's next.</em></h1>
-          <p>Reliable equipment for the jobs that shape a season. Browse, compare, and book by the day.</p>
-        </div>
-        <div className="catalog-stat"><span className="stat-number">{catalog.totalElements.toString().padStart(2, '0')}</span><span>machines ready<br />for the next season</span></div>
-        <div className="catalog-photo" role="img" aria-label="Sunlit agricultural fields"><span>GROW TOGETHER</span></div>
-      </section>
-      <section className="catalog-promises" aria-label="Fieldstead rental benefits">
-        <div><strong>{catalog.totalElements}</strong><span>equipment listings</span></div>
-        <div><strong>01</strong><span>simple daily pricing</span></div>
-        <div><strong>02</strong><span>requests reviewed by a real team</span></div>
-        <div><strong>03</strong><span>payment only after approval</span></div>
-      </section>
+      {/* Futuristic Hero Section */}
+      <section className="cyber-hero">
+        <div className="hero-grid-background" />
+        <div className="hero-content">
+          <div className="hero-left">
+            <div className="telemetry-pill">
+              <span className="live-dot" />
+              <span>TERRAGRID PROTOCOL // AUTONOMOUS AGRI-FLEET</span>
+            </div>
+            <h1 className="cyber-title">
+              Precision Machinery.<br />
+              <span className="gradient-text">Autonomous Scale.</span>
+            </h1>
+            <p className="hero-description">
+              Access certified high-performance agricultural machinery with RTK GPS autosteer,
+              live IoT telemetry, and instant sector dispatch across verified farming clusters.
+            </p>
 
-      <section className="catalog-toolbar" aria-label="Filter equipment">
-        <label className="search-field"><Search size={18} /><input type="search" value={search} maxLength="120" onChange={(event) => { setSearch(event.target.value); setPage(0); }} placeholder="Search by equipment name" aria-label="Search by equipment name" /></label>
-        <label className="category-field"><SlidersHorizontal size={17} /><select value={category} onChange={(event) => { setCategory(event.target.value); setPage(0); }} aria-label="Filter by category"><option value="">All categories</option>{categories.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
-        <span className="page-size-note">20 per page</span>
-      </section>
-
-      {isAdmin && <form className="admin-add" onSubmit={addEquipment}>
-        <div className="admin-add-heading"><span className="admin-add-icon"><CirclePlus size={18} /></span><div><strong>Add equipment</strong><small>New listings appear in the public catalog.</small></div></div>
-        <div className="admin-add-fields">
-          <input aria-label="Equipment name" placeholder="Equipment name" maxLength="120" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required />
-          <input aria-label="Category" placeholder="Category" maxLength="80" value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })} required />
-          <input aria-label="Daily rate" type="number" min="0.01" step="0.01" placeholder="Rate per day" value={form.dailyRate} onChange={(event) => setForm({ ...form, dailyRate: event.target.value })} required />
-          <input aria-label="Quantity" type="number" min="0" step="1" placeholder="Units" value={form.quantity} onChange={(event) => setForm({ ...form, quantity: event.target.value })} required />
-          <input aria-label="Equipment image URL" type="url" maxLength="500" placeholder="Photo URL (https://...)" value={form.imageUrl} onChange={(event) => setForm({ ...form, imageUrl: event.target.value })} />
-          <textarea aria-label="Description" placeholder="Short description" maxLength="2000" value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} required />
-          <textarea aria-label="Uses" placeholder="What is it used for?" maxLength="2000" value={form.uses} onChange={(event) => setForm({ ...form, uses: event.target.value })} required />
-        </div>
-        <button className="button button-primary" type="submit">Add listing <ArrowUpRight size={16} /></button>
-      </form>}
-
-      {message && <p className={isError ? 'inline-message error-message' : 'inline-message success-message'} role="status">{message}</p>}
-      <div className="catalog-results-heading"><h2>Available equipment</h2><span>{loading ? 'Updating catalog...' : `${firstItem}-${lastItem} of ${catalog.totalElements} results`}</span></div>
-
-      {loading && <div className="loading-line"><span /> Loading equipment</div>}
-      {!loading && catalog.content.length === 0 && <div className="empty-state"><Search size={25} /><h3>No equipment found</h3><p>Try a broader search or clear the category filter.</p><button className="button button-quiet" type="button" onClick={() => { setSearch(''); setCategory(''); }}>Clear filters</button></div>}
-      {!loading && catalog.content.length > 0 && <div className="equipment-grid">
-        {catalog.content.map((equipment, index) => <article className="equipment-card" key={equipment.id} style={{ '--card-index': index }}>
-          <Link className="equipment-image-link" to={`/equipment/${equipment.id}`} aria-label={`View ${equipment.name}`}><EquipmentVisual equipment={equipment} /></Link>
-          <div className="equipment-card-body">
-            <div className="equipment-card-meta"><span className="category-label">{equipment.category}</span><span className={equipment.quantity > 0 ? 'availability available' : 'availability unavailable'}>{equipment.quantity > 0 ? 'Available' : 'Booked'}</span></div>
-            <h3><Link to={`/equipment/${equipment.id}`}>{equipment.name}</Link></h3>
-            <p>{equipment.description || 'A dependable farm essential, ready when your next field job begins.'}</p>
-            <div className="equipment-card-foot"><span className="daily-rate"><strong>Rs. {Number(equipment.dailyRate).toLocaleString('en-IN')}</strong><small> / day</small></span><Link className="detail-link" to={`/equipment/${equipment.id}`} aria-label={`Details for ${equipment.name}`}><ArrowUpRight size={18} /></Link></div>
+            <div className="hero-stats-row">
+              <div className="hero-stat-card">
+                <span className="hero-stat-number">{catalog.totalElements.toString().padStart(2, '0')}</span>
+                <span className="hero-stat-label">Active Fleet Units</span>
+              </div>
+              <div className="hero-stat-card">
+                <span className="hero-stat-number">99.8%</span>
+                <span className="hero-stat-label">RTK Precision Lock</span>
+              </div>
+              <div className="hero-stat-card">
+                <span className="hero-stat-number">0%</span>
+                <span className="hero-stat-label">Capital Upfront</span>
+              </div>
+            </div>
           </div>
-        </article>)}
-      </div>}
 
-      {!loading && catalog.totalPages > 1 && <nav className="pagination" aria-label="Catalog pages">
-        <button className="button button-quiet" type="button" onClick={() => setPage((value) => Math.max(0, value - 1))} disabled={page === 0}><ChevronLeft size={17} /> Previous</button>
-        <span>Page <strong>{page + 1}</strong> of {catalog.totalPages}</span>
-        <button className="button button-quiet" type="button" onClick={() => setPage((value) => Math.min(catalog.totalPages - 1, value + 1))} disabled={page + 1 >= catalog.totalPages}>Next <ChevronRight size={17} /></button>
-      </nav>}
-
-      <section className="contact-section" id="contact">
-        <div className="contact-copy">
-          <span className="eyebrow"><span className="eyebrow-mark" /> WE’RE HERE TO HELP</span>
-          <h2>Let’s get your next<br /><em>field job moving.</em></h2>
-          <p>Need help choosing equipment or planning your dates? Reach out and our demo farm team will point you in the right direction.</p>
-          <a className="button button-primary" href="mailto:hello@fieldstead.example?subject=Fieldstead%20equipment%20enquiry">Contact the team <ArrowUpRight size={16} /></a>
-          <span className="contact-demo-note">Sample contact details shown for this demo.</span>
+          <div className="hero-right">
+            <WeatherRadar />
+          </div>
         </div>
-        <a className="location-card" href="https://www.google.com/maps/search/?api=1&query=Demo+Farm+Bengaluru+India" target="_blank" rel="noreferrer" aria-label="Open demo farm location in Google Maps">
-          <div className="location-map"><span className="map-grid" /><span className="map-pin"><MapPin size={21} /></span><span className="map-label">FIELDSTEAD / INDIA</span></div>
-          <div className="location-caption"><span><strong>Our demo location</strong><small>Bengaluru, India</small></span><ArrowUpRight size={18} /></div>
-        </a>
       </section>
+
+      {/* Cyber Filters Toolbar */}
+      <section className="cyber-toolbar" aria-label="Filter equipment">
+        <div className="search-field cyber-input">
+          <Search size={18} className="cyber-icon-muted" />
+          <input
+            type="search"
+            value={search}
+            maxLength="120"
+            onChange={(event) => { setSearch(event.target.value); setPage(0); }}
+            placeholder="Search machinery by name, specs or guidance tech..."
+            aria-label="Search machinery"
+          />
+          {search && (
+            <button type="button" className="clear-search-btn" onClick={() => setSearch('')}>Clear</button>
+          )}
+        </div>
+
+        <div className="category-field cyber-select">
+          <SlidersHorizontal size={17} className="cyber-icon-muted" />
+          <select
+            value={category}
+            onChange={(event) => { setCategory(event.target.value); setPage(0); }}
+            aria-label="Filter by category"
+          >
+            {categories.map((item) => (
+              <option key={item} value={item === 'All Categories' ? '' : item}>{item}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="sort-field cyber-select">
+          <Layers size={17} className="cyber-icon-muted" />
+          <select
+            value={sortBy}
+            onChange={(event) => setSortBy(event.target.value)}
+            aria-label="Sort machinery"
+          >
+            <option value="default">Sort: Default Protocol</option>
+            <option value="rate-asc">Rate: Low to High</option>
+            <option value="rate-desc">Rate: High to Low</option>
+            <option value="units">Fleet Availability</option>
+          </select>
+        </div>
+
+        <span className="page-size-note telemetry-code">DISPATCH://{catalog.totalElements}_UNITS</span>
+      </section>
+
+      {/* Admin Deployment Terminal */}
+      {isAdmin && (
+        <form className="admin-terminal" onSubmit={addEquipment}>
+          <div className="terminal-header">
+            <div className="terminal-dots">
+              <span className="dot red" />
+              <span className="dot yellow" />
+              <span className="dot green" />
+            </div>
+            <div className="terminal-title">
+              <CirclePlus size={16} />
+              <span>COMMAND://DEPLOY_NEW_FLEET_UNIT</span>
+            </div>
+          </div>
+
+          <div className="admin-add-fields">
+            <input
+              placeholder="Unit Name (e.g. John Deere Autonomous 8R)"
+              maxLength="120"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              required
+            />
+            <input
+              placeholder="Category (e.g. Tractor, Harvesting, Planting)"
+              maxLength="80"
+              value={form.category}
+              onChange={(e) => setForm({ ...form, category: e.target.value })}
+              required
+            />
+            <input
+              type="number"
+              min="0.01"
+              step="0.01"
+              placeholder="Daily Rate (Rs.)"
+              value={form.dailyRate}
+              onChange={(e) => setForm({ ...form, dailyRate: e.target.value })}
+              required
+            />
+            <input
+              type="number"
+              min="0"
+              step="1"
+              placeholder="Fleet Units Available"
+              value={form.quantity}
+              onChange={(e) => setForm({ ...form, quantity: e.target.value })}
+              required
+            />
+            <input
+              placeholder="Power Rating (e.g. 75 HP / 55 kW)"
+              maxLength="60"
+              value={form.powerRating}
+              onChange={(e) => setForm({ ...form, powerRating: e.target.value })}
+            />
+            <input
+              placeholder="Autonomous Tech (e.g. RTK Level 2 / Drone Assist)"
+              maxLength="60"
+              value={form.autonomousLevel}
+              onChange={(e) => setForm({ ...form, autonomousLevel: e.target.value })}
+            />
+            <input
+              placeholder="Fuel / Powertrain (e.g. Turbo Diesel, Hybrid EV)"
+              maxLength="60"
+              value={form.fuelType}
+              onChange={(e) => setForm({ ...form, fuelType: e.target.value })}
+            />
+            <input
+              type="url"
+              maxLength="500"
+              placeholder="Photo URL (https://...)"
+              value={form.imageUrl}
+              onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
+            />
+            <textarea
+              className="span-2"
+              placeholder="Operational Description & Specifications..."
+              maxLength="2000"
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              required
+            />
+            <textarea
+              className="span-2"
+              placeholder="Primary Agricultural Uses & Sector Compatibility..."
+              maxLength="2000"
+              value={form.uses}
+              onChange={(e) => setForm({ ...form, uses: e.target.value })}
+              required
+            />
+          </div>
+
+          <button className="button button-primary cyber-btn" type="submit">
+            <Zap size={16} /> Deploy Machine Listing <ArrowUpRight size={16} />
+          </button>
+        </form>
+      )}
+
+      {message && (
+        <p className={isError ? 'cyber-message error' : 'cyber-message success'} role="status">
+          {message}
+        </p>
+      )}
+
+      <div className="catalog-results-heading">
+        <h2>
+          Verified Fleet Inventory
+          <span className="results-counter">
+            {loading ? 'SYNCING SATELLITE FEED...' : `${firstItem}-${lastItem} OF ${catalog.totalElements} UNITS ACTIVE`}
+          </span>
+        </h2>
+      </div>
+
+      {loading && (
+        <div className="cyber-loading">
+          <div className="cyber-spinner" />
+          <span>INITIALIZING SATELLITE FLEET TELEMETRY...</span>
+        </div>
+      )}
+
+      {!loading && displayItems.length === 0 && (
+        <div className="empty-state cyber-empty">
+          <Search size={32} className="cyber-icon-muted" />
+          <h3>No Fleet Units Found</h3>
+          <p>Adjust your search filters or select All Categories to view available machines.</p>
+          <button className="button button-quiet" type="button" onClick={() => { setSearch(''); setCategory(''); }}>
+            Reset Filters
+          </button>
+        </div>
+      )}
+
+      {!loading && displayItems.length > 0 && (
+        <div className="equipment-grid cyber-grid">
+          {displayItems.map((equipment, index) => (
+            <article className="equipment-card cyber-card" key={equipment.id} style={{ '--card-index': index }}>
+              <Link className="equipment-image-link" to={`/equipment/${equipment.id}`} aria-label={`View ${equipment.name}`}>
+                <EquipmentVisual equipment={equipment} />
+              </Link>
+
+              <div className="equipment-card-body">
+                <div className="equipment-card-meta">
+                  <span className="category-label cyber-badge">{equipment.category}</span>
+                  <span className={equipment.quantity > 0 ? 'availability available' : 'availability unavailable'}>
+                    <span className="availability-pulse" />
+                    {equipment.quantity > 0 ? `${equipment.quantity} Ready` : 'In Rotation'}
+                  </span>
+                </div>
+
+                <h3>
+                  <Link to={`/equipment/${equipment.id}`}>{equipment.name}</Link>
+                </h3>
+
+                <p className="card-desc">
+                  {equipment.description || 'Certified heavy farm equipment ready for immediate sector dispatch.'}
+                </p>
+
+                {/* Telemetry specs badges */}
+                <div className="card-specs-row">
+                  {equipment.powerRating && (
+                    <span className="spec-chip" title="Power Rating">
+                      <Gauge size={12} /> {equipment.powerRating}
+                    </span>
+                  )}
+                  {equipment.fuelType && (
+                    <span className="spec-chip" title="Powertrain">
+                      <BatteryCharging size={12} /> {equipment.fuelType}
+                    </span>
+                  )}
+                </div>
+
+                <div className="equipment-card-foot">
+                  <div className="daily-rate cyber-price">
+                    <span className="currency-label">Rs.</span>
+                    <strong>{Number(equipment.dailyRate).toLocaleString('en-IN')}</strong>
+                    <small>/ day</small>
+                  </div>
+                  <Link className="cyber-action-btn" to={`/equipment/${equipment.id}`} aria-label={`Inspect ${equipment.name}`}>
+                    <span>Dispatch</span>
+                    <ArrowUpRight size={16} />
+                  </Link>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+
+      {!loading && catalog.totalPages > 1 && (
+        <nav className="pagination cyber-pagination" aria-label="Catalog pages">
+          <button
+            className="button button-quiet"
+            type="button"
+            onClick={() => setPage((v) => Math.max(0, v - 1))}
+            disabled={page === 0}
+          >
+            <ChevronLeft size={17} /> Previous
+          </button>
+          <span className="pagination-info">
+            CYCLE <strong>{page + 1}</strong> OF {catalog.totalPages}
+          </span>
+          <button
+            className="button button-quiet"
+            type="button"
+            onClick={() => setPage((v) => Math.min(catalog.totalPages - 1, v + 1))}
+            disabled={page + 1 >= catalog.totalPages}
+          >
+            Next <ChevronRight size={17} />
+          </button>
+        </nav>
+      )}
     </div>
   );
 }
