@@ -1,0 +1,14 @@
+{
+  "yaml.schemas": {
+    "https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json": [
+      "docker-compose.yml",
+      "docker-compose.*.yml",
+      "compose.yml",
+      "compose.*.yml"
+    ],
+    "https://render.com/schema/render.yaml.json": [
+      "render.yaml",
+      "render.yml"
+    ]
+  }
+}
