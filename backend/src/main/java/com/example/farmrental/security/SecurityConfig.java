@@ -38,8 +38,10 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/", "/health", "/api/health").permitAll()
+                .requestMatchers(HttpMethod.HEAD, "/", "/health", "/api/health").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/users/login", "/api/users/register").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/equipment", "/api/equipment/**").permitAll()
+                .requestMatchers(HttpMethod.HEAD, "/api/equipment", "/api/equipment/**").permitAll()
                 .anyRequest().authenticated())
             .exceptionHandling(errors -> errors
                 .authenticationEntryPoint((request, response, exception) -> {
