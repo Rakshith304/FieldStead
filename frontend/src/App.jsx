@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Link, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
-import { ArrowRight, Boxes, Leaf, LogOut, Tractor } from 'lucide-react';
+import { ArrowRight, Boxes, Leaf, LogOut, MapPin, MessageCircle, Tractor } from 'lucide-react';
 import Equipment from './pages/Equipment.jsx';
 import EquipmentDetail from './pages/EquipmentDetail.jsx';
 import Login from './pages/Login.jsx';
@@ -36,6 +36,8 @@ function AppFrame({ user, onLogout }) {
         <nav className="main-nav" aria-label="Main navigation">
           <Link className={onCatalog ? 'nav-link active' : 'nav-link'} to="/catalog"><Boxes size={16} /> Equipment</Link>
           {user && <Link className={location.pathname === '/rentals' ? 'nav-link active' : 'nav-link'} to="/rentals"><Leaf size={16} /> {user.role === 'ADMIN' ? 'Rental desk' : 'My rentals'}</Link>}
+          <Link className="nav-link" to="/catalog#contact"><MessageCircle size={15} /> Contact</Link>
+          <Link className="nav-link nav-location" to="/catalog#location"><MapPin size={15} /> Location</Link>
         </nav>
         <div className="header-account">
           {user ? <>
@@ -45,7 +47,16 @@ function AppFrame({ user, onLogout }) {
         </div>
       </header>
       <main className="main-content"><Outlet /></main>
-      <footer className="site-footer"><span>Fieldstead <span className="footer-dot">/</span> Built for working farms</span><span>Plan well. Work the land.</span></footer>
+      <footer className="site-footer">
+        <div className="footer-brand">
+          <Link className="brand footer-logo" to="/catalog"><span className="brand-mark"><Tractor size={19} /></span><span><strong>Fieldstead</strong><small>Equipment exchange</small></span></Link>
+          <p>Good equipment, shared locally.<br />More time for the work that matters.</p>
+          <span className="footer-demo-note">Demo contact details — replace before launch.</span>
+        </div>
+        <div className="footer-links"><strong>Explore</strong><Link to="/catalog">Browse equipment</Link>{user && <Link to="/rentals">{user.role === 'ADMIN' ? 'Rental desk' : 'My rentals'}</Link>}<Link to="/catalog#contact">Contact us</Link></div>
+        <div className="footer-contact" id="location"><strong>Find us</strong><a href="mailto:hello@fieldstead.example">hello@fieldstead.example</a><a href="tel:+910000000000">+91 00000 00000 <span>(demo)</span></a><a href="https://www.google.com/maps/search/?api=1&query=Demo+Farm+Bengaluru+India" target="_blank" rel="noreferrer">Demo farm · Bengaluru, India <MapPin size={14} /></a></div>
+        <div className="footer-bottom"><span>© {new Date().getFullYear()} Fieldstead <span className="footer-dot">/</span> Built for working farms</span><span>Plan well. Work the land.</span></div>
+      </footer>
     </div>
   );
 }

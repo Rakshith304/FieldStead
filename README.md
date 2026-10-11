@@ -37,6 +37,12 @@ Docker Engine and the Compose plugin are required.
 
 The production profile requires database credentials, JWT signing secret, and allowed CORS origins from the environment. JPA validates rather than mutates the production schema; Flyway applies versioned migrations. The frontend container uses unprivileged Nginx with SPA fallback and basic security headers.
 
+## Checkout And Contact Details
+
+Approved rentals can be paid in INR through Razorpay Checkout. Set `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` on the backend only; never expose the secret to the frontend or commit live keys. Configure Razorpay to capture payments automatically. The API verifies the checkout signature and confirms the captured payment, order, currency, and amount before marking a rental paid. Without gateway keys, checkout reports that online payments are not configured; rental requests and approvals still work. Use Razorpay test keys while validating the integration.
+
+The contact email, phone, and Bengaluru map link in the interface are explicitly marked demo details. Replace them with verified business contact information before launch.
+
 ## Security And API
 
 Login returns a signed, one-hour bearer token. Protected APIs derive the caller identity from that token; `X-User-Id` is not trusted. Passwords use BCrypt. Registration requires 12-72 characters. Equipment and rental mutations are validated and role-checked by the API; UI route guards are an additional usability layer, not the authorization boundary.
@@ -45,6 +51,7 @@ Login returns a signed, one-hour bearer token. Protected APIs derive the caller 
 - `GET /api/equipment?page=0&size=20&search=&category=`, `GET /api/equipment/{id}`
 - Admin: `POST /api/equipment`, `PUT /api/equipment/{id}`, `DELETE /api/equipment/{id}` (archive)
 - Authenticated: `POST /api/rentals`, `GET /api/rentals/my`
+- Approved rental payments: `POST /api/payments/rentals/{id}/order`, `POST /api/payments/rentals/{id}/verify`
 - Admin: `GET /api/rentals`
 - Authenticated status transitions: `PATCH /api/rentals/{id}/cancel|approve|reject|return` (role/state rules enforced)
 

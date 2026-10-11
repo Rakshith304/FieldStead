@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUpRight, ChevronLeft, ChevronRight, CirclePlus, Search, SlidersHorizontal } from 'lucide-react';
+import { ArrowUpRight, ChevronLeft, ChevronRight, CirclePlus, MapPin, Search, SlidersHorizontal } from 'lucide-react';
 import api, { errorText } from '../api';
 import EquipmentVisual from '../components/EquipmentVisual.jsx';
 
@@ -60,6 +60,13 @@ export default function Equipment({ user }) {
           <p>Reliable equipment for the jobs that shape a season. Browse, compare, and book by the day.</p>
         </div>
         <div className="catalog-stat"><span className="stat-number">{catalog.totalElements.toString().padStart(2, '0')}</span><span>machines ready<br />for the next season</span></div>
+        <div className="catalog-photo" role="img" aria-label="Sunlit agricultural fields"><span>GROW TOGETHER</span></div>
+      </section>
+      <section className="catalog-promises" aria-label="Fieldstead rental benefits">
+        <div><strong>{catalog.totalElements}</strong><span>equipment listings</span></div>
+        <div><strong>01</strong><span>simple daily pricing</span></div>
+        <div><strong>02</strong><span>requests reviewed by a real team</span></div>
+        <div><strong>03</strong><span>payment only after approval</span></div>
       </section>
 
       <section className="catalog-toolbar" aria-label="Filter equipment">
@@ -75,6 +82,7 @@ export default function Equipment({ user }) {
           <input aria-label="Category" placeholder="Category" maxLength="80" value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })} required />
           <input aria-label="Daily rate" type="number" min="0.01" step="0.01" placeholder="Rate per day" value={form.dailyRate} onChange={(event) => setForm({ ...form, dailyRate: event.target.value })} required />
           <input aria-label="Quantity" type="number" min="0" step="1" placeholder="Units" value={form.quantity} onChange={(event) => setForm({ ...form, quantity: event.target.value })} required />
+          <input aria-label="Equipment image URL" type="url" maxLength="500" placeholder="Photo URL (https://...)" value={form.imageUrl} onChange={(event) => setForm({ ...form, imageUrl: event.target.value })} />
           <textarea aria-label="Description" placeholder="Short description" maxLength="2000" value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} required />
           <textarea aria-label="Uses" placeholder="What is it used for?" maxLength="2000" value={form.uses} onChange={(event) => setForm({ ...form, uses: event.target.value })} required />
         </div>
@@ -103,6 +111,20 @@ export default function Equipment({ user }) {
         <span>Page <strong>{page + 1}</strong> of {catalog.totalPages}</span>
         <button className="button button-quiet" type="button" onClick={() => setPage((value) => Math.min(catalog.totalPages - 1, value + 1))} disabled={page + 1 >= catalog.totalPages}>Next <ChevronRight size={17} /></button>
       </nav>}
+
+      <section className="contact-section" id="contact">
+        <div className="contact-copy">
+          <span className="eyebrow"><span className="eyebrow-mark" /> WE’RE HERE TO HELP</span>
+          <h2>Let’s get your next<br /><em>field job moving.</em></h2>
+          <p>Need help choosing equipment or planning your dates? Reach out and our demo farm team will point you in the right direction.</p>
+          <a className="button button-primary" href="mailto:hello@fieldstead.example?subject=Fieldstead%20equipment%20enquiry">Contact the team <ArrowUpRight size={16} /></a>
+          <span className="contact-demo-note">Sample contact details shown for this demo.</span>
+        </div>
+        <a className="location-card" href="https://www.google.com/maps/search/?api=1&query=Demo+Farm+Bengaluru+India" target="_blank" rel="noreferrer" aria-label="Open demo farm location in Google Maps">
+          <div className="location-map"><span className="map-grid" /><span className="map-pin"><MapPin size={21} /></span><span className="map-label">FIELDSTEAD / INDIA</span></div>
+          <div className="location-caption"><span><strong>Our demo location</strong><small>Bengaluru, India</small></span><ArrowUpRight size={18} /></div>
+        </a>
+      </section>
     </div>
   );
 }
