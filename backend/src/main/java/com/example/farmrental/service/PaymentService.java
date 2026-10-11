@@ -1,7 +1,7 @@
 package com.example.farmrental.service;
 
-import com.example.farmrental.controller.PaymentController.PaymentVerification;
-import com.example.farmrental.controller.PaymentController.CheckoutOrder;
+import com.example.farmrental.dto.CheckoutOrder;
+import com.example.farmrental.dto.PaymentVerification;
 import com.example.farmrental.entity.Rental;
 import com.example.farmrental.exception.MyException;
 import com.example.farmrental.repository.RentalRepository;
@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.HexFormat;
+import java.util.Locale;
 import java.util.Map;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -32,17 +33,16 @@ public class PaymentService {
     public PaymentService(
         RentalRepository rentals,
         UserService users,
-        RestClient.Builder restClientBuilder,
         @Value("${app.razorpay.key-id:}") String keyId,
         @Value("${app.razorpay.key-secret:}") String keySecret
     ) {
         this.rentals = rentals;
         this.users = users;
-        this.keyId = keyId;
-        this.keySecret = keySecret;
-        var clientBuilder = restClientBuilder.baseUrl("https://api.razorpay.com/v1");
-        if (!keyId.isBlank() && !keySecret.isBlank()) {
-            clientBuilder.defaultHeaders(headers -> headers.setBasicAuth(keyId, keySecret));
+        this.keyId = keyId != null ? keyId : "";
+        this.keySecret = keySecret != null ? keySecret : "";
+        var clientBuilder = RestClient.builder().baseUrl("https://api.razorpay.com/v1");
+        if (!this.keyId.isBlank() && !this.keySecret.isBlank()) {
+            clientBuilder.defaultHeaders(headers -> headers.setBasicAuth(this.keyId, this.keySecret));
         }
         this.razorpay = clientBuilder.build();
     }
@@ -74,7 +74,9 @@ public class PaymentService {
             rentals.save(rental);
         }
         return new CheckoutOrder(keyId, orderId, amount, CURRENCY,
-            rental.getEquipment().getName(), farmer.getName(), farmer.getEmail());
+            rental.getEquipment().getName(),
+            farmer.getName() != null ? farmer.getName() : "Farmer",
+            farmer.getEmail());
     }
 
     @Transactional
@@ -95,7 +97,7 @@ public class PaymentService {
             throw new MyException(HttpStatus.BAD_REQUEST, "Payment order does not match this rental");
         }
         if (!MessageDigest.isEqual(signature(request).getBytes(StandardCharsets.US_ASCII),
-            request.razorpaySignature().toLowerCase().getBytes(StandardCharsets.US_ASCII))) {
+            request.razorpaySignature().trim().toLowerCase(Locale.ROOT).getBytes(StandardCharsets.US_ASCII))) {
             throw new MyException(HttpStatus.BAD_REQUEST, "Payment signature could not be verified");
         }
 
