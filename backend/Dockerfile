@@ -1,0 +1,14 @@
+FROM maven:3.9.9-eclipse-temurin-17 AS build
+WORKDIR /workspace
+COPY pom.xml .
+RUN mvn -B -q dependency:go-offline
+COPY src ./src
+RUN mvn -B -q package -DskipTests
+
+FROM eclipse-temurin:17-jre-alpine
+WORKDIR /app
+RUN addgroup -S app && adduser -S -G app app
+COPY --from=build /workspace/target/farmrental-0.0.1-SNAPSHOT.jar /app/app.jar
+USER app
+EXPOSE 8080
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75", "-jar", "/app/app.jar"]
