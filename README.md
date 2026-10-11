@@ -57,6 +57,29 @@ Login returns a signed, one-hour bearer token. Protected APIs derive the caller 
 
 Use `Authorization: Bearer <token>` for protected endpoints. `VITE_API_URL` selects the frontend API base URL.
 
+## Deployment (Railway & Vercel)
+
+### 1. Backend Deployment on Railway
+1. Create a new Project on [Railway](https://railway.com) and add a **MySQL** database service.
+2. Add a new service from your GitHub repository `FieldStead`.
+3. Railway automatically detects the root `Dockerfile` (or set Root Directory to `/backend`).
+4. Set the following environment variables on the backend service:
+   - `DB_URL`: `jdbc:mysql://${{MySQL.MYSQLHOST}}:${{MySQL.MYSQLPORT}}/${{MySQL.MYSQLDATABASE}}?serverTimezone=UTC` *(or let the backend automatically read Railway's native `MYSQL_URL` / `MYSQLHOST` variables)*
+   - `DB_USERNAME`: `${{MySQL.MYSQLUSER}}`
+   - `DB_PASSWORD`: `${{MySQL.MYSQLPASSWORD}}`
+   - `JWT_SECRET`: A secure 32+ character secret string.
+   - `CORS_ALLOWED_ORIGINS`: Your Vercel frontend URL (e.g. `https://your-app.vercel.app`).
+   - *(Optional)* `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` for online payments.
+5. Railway uses `/api/health` for health checks to ensure zero-downtime deployments.
+
+### 2. Frontend Deployment on Vercel
+1. Import your GitHub repository `FieldStead` on [Vercel](https://vercel.com).
+2. Set **Root Directory** to `frontend` (or leave default root, both are supported by `vercel.json`).
+3. Set Environment Variable:
+   - `VITE_API_URL`: Your Railway backend public URL (e.g. `https://your-backend.up.railway.app/api`).
+4. Click **Deploy**. Vercel will build the SPA with client-side routing enabled.
+
 ## Verification
 
-Backend: `mvn package` from `backend`. Frontend: `npm ci` and `npm run build` from `frontend`. The repository currently has no automated test suite.
+Backend: `mvn clean package` from `backend`. Frontend: `npm run build` from `frontend`.
+All health, catalog, rental, and user endpoints respond with verified contracts.

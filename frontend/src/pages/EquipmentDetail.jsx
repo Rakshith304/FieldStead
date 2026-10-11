@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, CalendarDays, Check, CircleAlert, ShieldCheck, Wrench } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CalendarDays, Check, CircleAlert, Edit3, ShieldCheck, Trash2, Wrench, X } from 'lucide-react';
 import api, { errorText } from '../api';
 import EquipmentVisual from '../components/EquipmentVisual.jsx';
 
@@ -19,13 +19,34 @@ export default function EquipmentDetail({ user }) {
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    name: '',
+    category: '',
+    dailyRate: '',
+    quantity: 1,
+    imageUrl: '',
+    description: '',
+    uses: '',
+  });
   const isAdmin = user?.role === 'ADMIN';
 
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
     api.get(`/equipment/${id}`, { signal: controller.signal })
-      .then(({ data }) => setEquipment(data))
+      .then(({ data }) => {
+        setEquipment(data);
+        setEditForm({
+          name: data.name || '',
+          category: data.category || '',
+          dailyRate: data.dailyRate || '',
+          quantity: data.quantity ?? 1,
+          imageUrl: data.imageUrl || '',
+          description: data.description || '',
+          uses: data.uses || '',
+        });
+      })
       .catch((error) => { if (error.name !== 'CanceledError') { setMessage(errorText(error)); setIsError(true); } })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
@@ -45,6 +66,25 @@ export default function EquipmentDetail({ user }) {
     try {
       await api.post('/rentals', { equipmentId: equipment.id, ...dates });
       navigate('/rentals', { state: { notice: 'Your rental request has been sent.' } });
+    } catch (error) {
+      setMessage(errorText(error));
+      setIsError(true);
+    }
+  }
+
+  async function saveEquipment(event) {
+    event.preventDefault();
+    try {
+      const payload = {
+        ...editForm,
+        dailyRate: Number(editForm.dailyRate),
+        quantity: Number(editForm.quantity),
+      };
+      const { data } = await api.put(`/equipment/${equipment.id}`, payload);
+      setEquipment(data);
+      setIsEditing(false);
+      setMessage('Equipment details updated successfully.');
+      setIsError(false);
     } catch (error) {
       setMessage(errorText(error));
       setIsError(true);
@@ -81,17 +121,40 @@ export default function EquipmentDetail({ user }) {
           <p className="safety-note"><ShieldCheck size={18} /><span>Only trained operators should use this equipment. Follow the manufacturer's instructions and use the appropriate protective equipment.</span></p>
         </div>
         <aside className="booking-panel">
-          <span className="eyebrow"><CalendarDays size={14} /> RENT BY THE DAY</span>
-          <h2>Choose your dates</h2>
-          <p>Submit a request and the farm team will confirm availability.</p>
-          {!isAdmin ? <form className="booking-form" onSubmit={requestRental}>
-            <label className="field-label">Start date<input type="date" min={localToday()} value={dates.startDate} onChange={(event) => setDates({ ...dates, startDate: event.target.value, endDate: dates.endDate && dates.endDate < event.target.value ? '' : dates.endDate })} required /></label>
-            <label className="field-label">End date<input type="date" min={dates.startDate || localToday()} value={dates.endDate} onChange={(event) => setDates({ ...dates, endDate: event.target.value })} required /></label>
-            {days > 0 && <div className="estimate-row"><span>{days} {days === 1 ? 'day' : 'days'} estimated</span><strong>Rs. {estimate.toLocaleString('en-IN')}</strong></div>}
-            <button className="button button-primary booking-submit" type="submit" disabled={equipment.quantity < 1}>{user?.token ? 'Request equipment' : 'Sign in to request'} <ArrowRight size={17} /></button>
-          </form> : <button className="button button-quiet booking-submit" type="button" onClick={archiveEquipment}>Archive listing</button>}
+          <span className="eyebrow"><CalendarDays size={14} /> {isAdmin ? 'ADMINISTRATION' : 'RENT BY THE DAY'}</span>
+          <h2>{isAdmin ? (isEditing ? 'Edit equipment' : 'Manage equipment') : 'Choose your dates'}</h2>
+          <p>{isAdmin ? 'Update machine listing details or remove from catalog.' : 'Submit a request and the farm team will confirm availability.'}</p>
+
+          {!isAdmin ? (
+            <form className="booking-form" onSubmit={requestRental}>
+              <label className="field-label">Start date<input type="date" min={localToday()} value={dates.startDate} onChange={(event) => setDates({ ...dates, startDate: event.target.value, endDate: dates.endDate && dates.endDate < event.target.value ? '' : dates.endDate })} required /></label>
+              <label className="field-label">End date<input type="date" min={dates.startDate || localToday()} value={dates.endDate} onChange={(event) => setDates({ ...dates, endDate: event.target.value })} required /></label>
+              {days > 0 && <div className="estimate-row"><span>{days} {days === 1 ? 'day' : 'days'} estimated</span><strong>Rs. {estimate.toLocaleString('en-IN')}</strong></div>}
+              <button className="button button-primary booking-submit" type="submit" disabled={equipment.quantity < 1}>{user?.token ? 'Request equipment' : 'Sign in to request'} <ArrowRight size={17} /></button>
+            </form>
+          ) : isEditing ? (
+            <form className="booking-form" onSubmit={saveEquipment}>
+              <label className="field-label">Name<input value={editForm.name} maxLength="120" onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} required /></label>
+              <label className="field-label">Category<input value={editForm.category} maxLength="80" onChange={(e) => setEditForm({ ...editForm, category: e.target.value })} required /></label>
+              <label className="field-label">Daily rate (Rs)<input type="number" min="0.01" step="0.01" value={editForm.dailyRate} onChange={(e) => setEditForm({ ...editForm, dailyRate: e.target.value })} required /></label>
+              <label className="field-label">Fleet units<input type="number" min="0" step="1" value={editForm.quantity} onChange={(e) => setEditForm({ ...editForm, quantity: e.target.value })} required /></label>
+              <label className="field-label">Photo URL<input type="url" maxLength="500" value={editForm.imageUrl} onChange={(e) => setEditForm({ ...editForm, imageUrl: e.target.value })} placeholder="https://..." /></label>
+              <label className="field-label">Description<textarea maxLength="2000" value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} required /></label>
+              <label className="field-label">Uses<textarea maxLength="2000" value={editForm.uses} onChange={(e) => setEditForm({ ...editForm, uses: e.target.value })} required /></label>
+              <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                <button className="button button-primary" style={{ flex: 1 }} type="submit"><Check size={16} /> Save</button>
+                <button className="button button-quiet" type="button" onClick={() => setIsEditing(false)}><X size={16} /> Cancel</button>
+              </div>
+            </form>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <button className="button button-primary booking-submit" type="button" onClick={() => setIsEditing(true)}><Edit3 size={16} /> Edit details</button>
+              <button className="button button-quiet booking-submit" type="button" onClick={archiveEquipment}><Trash2 size={16} /> Archive listing</button>
+            </div>
+          )}
+
           {message && <p className={isError ? 'form-message error-message' : 'form-message success-message'} role="status">{message}</p>}
-          <p className="booking-footnote"><Check size={14} /> No charge until your request is approved</p>
+          {!isAdmin && <p className="booking-footnote"><Check size={14} /> No charge until your request is approved</p>}
         </aside>
       </div>
     </div>
